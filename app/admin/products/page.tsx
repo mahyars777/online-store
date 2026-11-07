@@ -1,0 +1,13 @@
+ "use client";
+import { useEffect, useState } from "react";
+import { Plus, Pencil, Trash2 } from "lucide-react";
+import type { Product } from "@/types";
+import { adminApi, imageSrc } from "@/lib/api";
+import { ProductForm } from "@/components/product-form";
+export default function AdminProducts(){
+ const [products,setProducts]=useState<Product[]>([]);const [editing,setEditing]=useState<Product|null|undefined>(undefined);const [error,setError]=useState("");const [loading,setLoading]=useState(true);
+ async function load(){setLoading(true);try{setProducts(await adminApi.products());setError("")}catch(e:any){setError(e.message)}finally{setLoading(false)}}
+ useEffect(()=>{load()},[]);
+ async function remove(p:Product){if(!confirm(`محصول «${p.name}» حذف شود؟`))return;try{await adminApi.deleteProduct(String(p.id));load()}catch(e:any){setError(e.message)}}
+ return <><div className="mb-7 flex flex-wrap items-end justify-between gap-3"><div><p className="text-sm font-bold text-brand">کاتالوگ فروشگاه</p><h1 className="mt-2 text-3xl font-extrabold">مدیریت محصولات</h1></div><button onClick={()=>setEditing(null)} className="btn btn-primary"><Plus size={17}/> افزودن محصول</button></div>{editing!==undefined&&<div className="mb-6"><ProductForm product={editing} onSaved={()=>{setEditing(undefined);load()}} onCancel={()=>setEditing(undefined)}/></div>}{error&&<p className="mb-4 rounded-xl bg-red-50 p-4 text-sm text-red-700">{error}</p>}{loading?<p className="p-8 text-center text-muted">در حال دریافت اطلاعات...</p>:<div className="surface overflow-hidden"><div className="overflow-x-auto"><table className="w-full min-w-[650px] text-right text-sm"><thead className="bg-soft text-muted"><tr><th className="p-4">محصول</th><th className="p-4">قیمت</th><th className="p-4">موجودی</th><th className="p-4">عملیات</th></tr></thead><tbody>{products.map(p=><tr key={p.id} className="border-t border-line"><td className="p-4"><div className="flex items-center gap-3"><div className="product-image h-12 w-12 overflow-hidden rounded-lg">{p.imageUrl?<img src={imageSrc(p.imageUrl)} className="h-full w-full object-cover" alt=""/>:<span className="grid h-full place-items-center">🌿</span>}</div><b>{p.name}</b></div></td><td className="p-4">{Number(p.price).toLocaleString("fa-IR")} تومان</td><td className="p-4">{Number(p.stock??0).toLocaleString("fa-IR")}</td><td className="p-4"><div className="flex gap-2"><button onClick={()=>setEditing(p)} className="btn btn-light !p-2"><Pencil size={16}/></button><button onClick={()=>remove(p)} className="btn btn-danger !p-2"><Trash2 size={16}/></button></div></td></tr>)}</tbody></table>{!products.length&&<p className="p-8 text-center text-muted">محصولی ثبت نشده است.</p>}</div></div>}</>;
+}
